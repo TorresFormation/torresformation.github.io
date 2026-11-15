@@ -102,13 +102,19 @@
     if (el) { el.classList.add('r'); apparus.push(el); }
   });
   var radar = document.getElementById('radar');
+  if (radar) {   // longueur réelle de chaque route (le tracé progressif n'a pas besoin de pathLength, mal géré sur certains mobiles)
+    Array.prototype.forEach.call(radar.querySelectorAll('.radar__route'), function (r) {
+      var l = 100; try { l = Math.ceil(r.getTotalLength()) + 1; } catch (e) {}
+      r.style.strokeDasharray = l; r.style.strokeDashoffset = l; r.style.setProperty('--len', l);
+    });
+  }
   var aVoir = Array.prototype.slice.call(tetes).concat(apparus, radar ? [radar] : []);
   if ('IntersectionObserver' in window) {
     var vue = new IntersectionObserver(function (entrees) {
       entrees.forEach(function (e) {
         if (e.isIntersecting) { e.target.classList.add('est-vu'); vue.unobserve(e.target); }
       });
-    }, { rootMargin: '0px 0px -10% 0px' });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
     aVoir.forEach(function (t) { vue.observe(t); });
   } else {
     aVoir.forEach(function (t) { t.classList.add('est-vu'); });

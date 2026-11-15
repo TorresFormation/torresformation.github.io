@@ -9,6 +9,7 @@ const boite = document.getElementById('visuel');
 const toile = document.getElementById('scene');
 const calme = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const apercu = /[?&]hq\b/.test(location.search);            // test : force la pleine définition
+const testRy = parseFloat((location.search.match(/[?&]ry=(-?[\d.]+)/) || [])[1] || 0); // test : angle de vue forcé
 const fige = (location.search.match(/[?&]t=([\d.]+)/) || [])[1]; // test : fige l'animation à t secondes
 
 // Rendu logiciel (le navigateur n'utilise pas la carte graphique) : on allège fortement.
@@ -148,7 +149,7 @@ function demarrer() {
 
   const mLG = matiere(0xedeae4, { roughness: 0.55 });              // lame gauche
   const mLD = matiere(0xa9a59e, { roughness: 0.45 });              // lame droite
-  const mAile = matiere(0x6e6b66, { roughness: 0.6 });             // ailes
+  const mAile = matiere(0x6e6b66, { roughness: 0.6, side: THREE.DoubleSide });             // ailes
   // Thème : sur fond sombre, les teintes du logo officiel ; sur fond clair, leur version foncée.
   const TEINTES = { sombre: [0xedeae4, 0xa9a59e, 0x6e6b66], clair: [0x1b1b1e, 0x6e6b66, 0xa9a59e] };
   function teinter() {
@@ -383,7 +384,7 @@ function demarrer() {
 
     poser(t);
     const flotte = calme ? 0 : 1;
-    ensemble.rotation.y = lisse.x * 0.5 + lisse.tour * 0.7 + pivot.x + Math.sin(t * 0.45) * 0.1 * flotte;
+    ensemble.rotation.y = testRy + lisse.x * 0.5 + lisse.tour * 0.7 + pivot.x + Math.sin(t * 0.45) * 0.1 * flotte;
     ensemble.rotation.x = -lisse.y * 0.3 + pivot.y + Math.sin(t * 0.33) * 0.035 * flotte;
     ensemble.position.y += Math.sin(t * 0.6) * 0.04 * flotte;
     dessiner();
@@ -466,7 +467,7 @@ function demarrer() {
   rendu.compile(scene, camera);
   pret = true;
   if (fige !== undefined) {
-    poser(parseFloat(fige)); dessiner();
+    poser(parseFloat(fige)); ensemble.rotation.y = testRy; dessiner();
   } else {
     poser(dejaVu ? 99 : 0);     // première image : scène vide, les pièces ne sont pas encore arrivées
     dessiner();

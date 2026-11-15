@@ -21,6 +21,8 @@
 <link rel="preload" href="assets/fonts/BarlowCondensed-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Barlow-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="modulepreload" href="vendor/three.module.min.js">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -33,8 +35,7 @@
   "email": "t.maicol.formation@gmail.com",
   "founder": { "@type": "Person", "name": "Maïcol Torres" },
   "address": { "@type": "PostalAddress", "addressLocality": "Saint-Lubin-des-Joncherets", "postalCode": "28350", "addressCountry": "FR" },
-  "areaServed": ["Île-de-France", "Eure-et-Loir", "Normandie"],
-  "knowsLanguage": ["fr", "es"]
+  "areaServed": ["Île-de-France", "Eure-et-Loir", "Normandie"]
 }
 </script>
 </head>
@@ -52,7 +53,7 @@
   </button>
   <nav class="navigation" id="navigation" aria-label="Navigation principale">
     <a href="#formations">Formations</a>
-    <a href="#parcours">Le formateur</a>
+    <a href="#atouts">Atouts</a>
     <a href="#deroule">Déroulé</a>
     <a href="#zone">Zone</a>
     <a href="#questions">Questions</a>
@@ -89,32 +90,26 @@
     <p>Chaque session associe théorie et pratique. La pratique se fait sur vos machines, dans vos conditions de travail réelles.</p>
   </div>
   <ul class="engins">
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#A9A59E" d="M66 8h4v52h-4z"/><path fill="#EDEAE4" d="M70 56h18v3H70z"/><path fill="none" stroke="#A9A59E" stroke-width="2.5" d="M33 40l5-22h19l4 22"/><path fill="#EDEAE4" d="M22 40h42v16H26l-4-8z"/><path fill="#6E6B66" d="M22 40h12v16h-8l-4-8z"/><circle cx="33" cy="58" r="8" fill="#6E6B66"/><circle cx="33" cy="58" r="3" fill="#EDEAE4"/><circle cx="57" cy="59" r="7" fill="#6E6B66"/><circle cx="57" cy="59" r="2.6" fill="#EDEAE4"/></svg><h3>Chariots élévateurs</h3><p>Chariots frontaux, à mât rétractable, transpalettes à conducteur porté.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#A9A59E" d="M52 6h5v56h-5z"/><path fill="#EDEAE4" d="M57 58h28v3H57z"/><path fill="#EDEAE4" d="M32 30h20v30H32z"/><path fill="#6E6B66" d="M32 30h7v30h-7z"/><path fill="none" stroke="#A9A59E" stroke-width="3" stroke-linecap="round" d="M35 32L17 20"/><circle cx="15" cy="19" r="4" fill="#EDEAE4"/><circle cx="40" cy="63" r="5" fill="#6E6B66"/><circle cx="82" cy="64" r="3" fill="#6E6B66"/></svg><h3>Gerbeurs</h3><p>Gerbeurs à conducteur accompagnant, conduits à pied.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#EDEAE4" d="M16 50h64v9H16z"/><circle cx="28" cy="62" r="6" fill="#6E6B66"/><circle cx="68" cy="62" r="6" fill="#6E6B66"/><path fill="none" stroke="#A9A59E" stroke-width="2.5" d="M24 50l48-14M72 50L24 36M24 36l48-14M72 36L24 22"/><path fill="#EDEAE4" d="M18 19h60v4H18z"/><path fill="none" stroke="#EDEAE4" stroke-width="2" d="M19 19V7h58v12M38 7v12M58 7v12"/></svg><h3>Nacelles élévatrices</h3><p>Nacelles à ciseaux et nacelles articulées.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><rect x="10" y="53" width="50" height="11" rx="5.5" fill="#6E6B66"/><path fill="#EDEAE4" d="M16 50h40V38H46l-4-13H26l-4 13h-6z"/><path fill="#6E6B66" d="M29 29h11l3 9H26z"/><path fill="none" stroke="#A9A59E" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M50 40l18-27 15 20"/><path fill="#EDEAE4" d="M78 32l12 3-3 12-11-5z"/></svg><h3>Engins de chantier</h3><p>Mini-engins, pelles, chargeuses, chariots tout-terrain.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#EDEAE4" d="M8 54V35l9-6h11v25z"/><path fill="#6E6B66" d="M12 37l6-4h6v9H12z"/><path fill="#A9A59E" d="M30 46h56v8H30z"/><circle cx="19" cy="58" r="7" fill="#6E6B66"/><circle cx="19" cy="58" r="2.6" fill="#EDEAE4"/><circle cx="62" cy="58" r="7" fill="#6E6B66"/><circle cx="62" cy="58" r="2.6" fill="#EDEAE4"/><circle cx="78" cy="58" r="7" fill="#6E6B66"/><circle cx="78" cy="58" r="2.6" fill="#EDEAE4"/><path fill="#EDEAE4" d="M32 30h6v16h-6z"/><path fill="none" stroke="#EDEAE4" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" d="M35 31l17-21 28 8"/><path fill="none" stroke="#A9A59E" stroke-width="1.6" d="M80 18v10"/><path fill="none" stroke="#A9A59E" stroke-width="2.2" stroke-linecap="round" d="M80 28c4 0 4 6 0 6"/></svg><h3>Grues de chargement</h3><p>Grues auxiliaires sur camion, avec ou sans télécommande.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M6 30h84v36H6z"/><path fill="#EDEAE4" d="M6 28h84v3H6z"/><circle cx="26" cy="50" r="8" fill="none" stroke="#EDEAE4" stroke-width="3"/><circle cx="52" cy="44" r="5" fill="none" stroke="#EDEAE4" stroke-width="3"/><circle cx="72" cy="54" r="6.5" fill="none" stroke="#EDEAE4" stroke-width="3"/><path fill="none" stroke="#A9A59E" stroke-width="2" d="M52 28V12"/><path fill="#EDEAE4" d="M52 6l12 5-12 5z"/></svg><h3>Travaux près des réseaux</h3><p>AIPR : opérateur, encadrant et concepteur.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="none" stroke="#A9A59E" stroke-width="2.5" d="M48 2v9"/><path fill="none" stroke="#EDEAE4" stroke-width="3.5" stroke-linecap="round" d="M48 11c6 0 6 9 0 9s-6-4-6-4"/><path fill="none" stroke="#A9A59E" stroke-width="2.2" d="M48 20L24 44M48 20l24 24"/><path fill="#EDEAE4" d="M20 44h56v20H20z"/><path fill="#6E6B66" d="M20 44h56v6H20z"/></svg><h3>Élingage</h3><p>Choix des accessoires, modes d'élingage, gestes de commandement.</p></li>
-    <li class="engin"><svg viewBox="0 0 96 72" aria-hidden="true" focusable="false"><path fill="#EDEAE4" d="M43 8h10l15 48H28z"/><path fill="#6E6B66" d="M39 22h18l3 10H36zM33 41h30l3 9H30z"/><path fill="#A9A59E" d="M20 56h56v7H20z"/></svg><h3>Balisage de chantier</h3><p>Mise en place et maintien d'une signalisation temporaire.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><path fill="#A9A59E" d="M26 40V18h4v22zM54 40l4-22h4l-4 22z"/><path fill="#EDEAE4" d="M22 13h44v5H22z"/><path fill="#6E6B66" d="M33 40v-9h7v9z"/><path fill="#EDEAE4" d="M10 64V46l6-6h50v24z"/><path fill="#6E6B66" d="M10 64V46l6-6h8v24z"/><path fill="#A9A59E" d="M70 6h6v58h-6z"/><path fill="#6E6B66" d="M76 38h4v26h-4z"/><path fill="#C22A22" d="M80 60h28l3 4H80z"/><circle cx="25" cy="64" r="9" fill="#6E6B66"/><circle cx="25" cy="64" r="3.5" fill="#EDEAE4"/><circle cx="56" cy="64" r="9" fill="#6E6B66"/><circle cx="56" cy="64" r="3.5" fill="#EDEAE4"/></svg><h3>Chariots élévateurs</h3><p>Chariots frontaux, à mât rétractable, transpalettes à conducteur porté.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><path fill="#A9A59E" d="M62 4h6v62h-6z"/><path fill="#A9A59E" d="M37 31l4 4-24-17 3-4z"/><path fill="#EDEAE4" d="M10 12l11-3 1.5 4.5-11 3z"/><path fill="#EDEAE4" d="M34 66V34l4-4h24v36z"/><path fill="#6E6B66" d="M34 66V34l4-4h4v36z"/><path fill="#6E6B66" d="M68 38h4v28h-4z"/><path fill="#C22A22" d="M72 62h34l3 4H72z"/><circle cx="48" cy="67" r="6" fill="#6E6B66"/><circle cx="48" cy="67" r="2.2" fill="#EDEAE4"/><circle cx="100" cy="69.5" r="3.5" fill="#6E6B66"/></svg><h3>Gerbeurs</h3><p>Gerbeurs à conducteur accompagnant, conduits à pied.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><path fill="none" stroke="#A9A59E" stroke-width="4" d="M32 50l56-14M88 50L32 36M32 36l56-14M88 36L32 22"/><path fill="#EDEAE4" d="M16 62v-8l4-4h80l4 4v8z"/><path fill="#C22A22" d="M22 55h12v3H22z"/><circle cx="32" cy="65" r="8" fill="#6E6B66"/><circle cx="32" cy="65" r="3" fill="#EDEAE4"/><circle cx="88" cy="65" r="8" fill="#6E6B66"/><circle cx="88" cy="65" r="3" fill="#EDEAE4"/><path fill="#EDEAE4" d="M22 18h76v4H22z"/><path fill="none" stroke="#EDEAE4" stroke-width="2.5" d="M24 18V7h72v11M48 7v11M72 7v11"/></svg><h3>Nacelles élévatrices</h3><p>Nacelles à ciseaux et nacelles articulées.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><rect x="8" y="58" width="60" height="15" rx="7.5" fill="#6E6B66"/><rect x="14" y="62" width="48" height="7" rx="3.5" fill="#A9A59E"/><path fill="#A9A59E" d="M46 50l4-6 24-28 6 4-26 32z"/><path fill="#A9A59E" d="M74 16l6-2 20 28-5 4z"/><path fill="#C22A22" d="M94 42l9-4 5 14-12 3-4-6z"/><path fill="#EDEAE4" d="M12 56V44l6-6h34v18z"/><path fill="#EDEAE4" d="M22 38V22l4-4h16l6 20z"/><path fill="#6E6B66" d="M26 34V24l2-2h12l4 12z"/><path fill="#6E6B66" d="M12 56V44l6-6h4v18z"/></svg><h3>Engins de chantier</h3><p>Mini-engins, pelles, chargeuses, chariots tout-terrain.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><path fill="#A9A59E" d="M30 55h82v8H30z"/><path fill="#6E6B66" d="M34 55V30h8v25z"/><path fill="#EDEAE4" d="M36 31l5-6 63-13v6L43 35z"/><path fill="none" stroke="#A9A59E" stroke-width="1.5" d="M101 17v16"/><path fill="none" stroke="#C22A22" stroke-width="2.6" stroke-linecap="round" d="M101 33v5a4 4 0 1 1-6-3.4"/><path fill="#EDEAE4" d="M8 64V40l8-10h14v34z"/><path fill="#6E6B66" d="M13 42l5-7h7v7z"/><circle cx="19" cy="65" r="8" fill="#6E6B66"/><circle cx="19" cy="65" r="3" fill="#EDEAE4"/><circle cx="78" cy="65" r="8" fill="#6E6B66"/><circle cx="78" cy="65" r="3" fill="#EDEAE4"/><circle cx="96" cy="65" r="8" fill="#6E6B66"/><circle cx="96" cy="65" r="3" fill="#EDEAE4"/></svg><h3>Grues de chargement</h3><p>Grues auxiliaires sur camion, avec ou sans télécommande.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M6 34h108v40H6z"/><path fill="#A9A59E" d="M6 32h108v3H6z"/><path fill="none" stroke="#C22A22" stroke-width="2" stroke-dasharray="5 3" d="M14 46h92"/><circle cx="34" cy="60" r="7" fill="#EDEAE4"/><circle cx="34" cy="60" r="3" fill="#6E6B66"/><circle cx="62" cy="62" r="5" fill="#A9A59E"/><circle cx="88" cy="58" r="8" fill="#EDEAE4"/><circle cx="88" cy="58" r="4" fill="#6E6B66"/><path fill="#EDEAE4" d="M46 4h28l-4 18H50z"/><path fill="#A9A59E" d="M50 22l3 7 3-7 3 7 3-7 3 7 3-7 3 7 3-7z"/></svg><h3>Travaux près des réseaux</h3><p>AIPR : opérateur, encadrant et concepteur.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="none" stroke="#A9A59E" stroke-width="2" d="M60 0v12"/><path fill="none" stroke="#EDEAE4" stroke-width="4" stroke-linecap="round" d="M60 12v6a6 6 0 1 1-6 6"/><path fill="none" stroke="#C22A22" stroke-width="3" d="M60 28L30 48M60 28l30 20"/><path fill="#EDEAE4" d="M24 48h72v22l-4 4H24z"/><path fill="#A9A59E" d="M24 48h72v6H24z"/><path fill="#6E6B66" d="M24 61h72v2H24z"/></svg><h3>Élingage</h3><p>Choix des accessoires, modes d'élingage, gestes de commandement.</p></li>
+    <li class="engin"><svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path fill="#6E6B66" d="M4 73h112v1.5H4z" opacity=".5"/><path fill="#A9A59E" d="M91 36h6l8 30H83z"/><path fill="#6E6B66" d="M89.4 42h9.2l1.6 6H87.8z"/><path fill="#6E6B66" d="M78 66h32v5H78z"/><path fill="#EDEAE4" d="M50 8h10l17 58H33z"/><path fill="#C22A22" d="M46.2 21h17.6l3.2 11H43z"/><path fill="#C22A22" d="M40.6 40h28.8l3.2 11H37.4z"/><path fill="#6E6B66" d="M26 66h58v6H26z"/></svg><h3>Balisage de chantier</h3><p>Mise en place et maintien d'une signalisation temporaire.</p></li>
   </ul>
   <p class="engins__note">Les formations à la conduite suivent les référentiels CACES<sup>®</sup>. <strong>Elles vous permettent, en tant qu'employeur, de délivrer l'autorisation de conduite à vos salariés.</strong></p>
 </section>
 
-<section class="bloc" id="parcours">
+<section class="bloc" id="atouts">
   <div class="bloc__tete">
-    <h2>Un formateur qui connaît la machine de l'intérieur</h2>
-    <p>Avant de former, j'ai dépanné. Trois ans de maintenance industrielle en mécanique, électricité et hydraulique : quand un stagiaire demande pourquoi l'engin réagit ainsi, la réponse est technique, pas approximative.</p>
+    <h2>Une formation taillée pour votre site</h2>
+    <p>Vos engins, vos allées, vos consignes : la formation colle à la réalité de votre entreprise, pas à un plateau d'exercice.</p>
   </div>
-  <ol class="frise">
-    <li><span class="frise__date">2016 à 2019</span><h3>Bac Pro Maintenance des équipements industriels</h3></li>
-    <li><span class="frise__date">2019 à 2022</span><h3>Technicien de maintenance industrielle</h3><p>Diagnostic de pannes, mécanique, électrique, hydraulique.</p></li>
-    <li><span class="frise__date">2022 à 2025</span><h3>Formateur en manutention</h3><p>Évaluation, accompagnement des stagiaires, conception de modules pédagogiques.</p></li>
-    <li><span class="frise__date">Depuis 2026</span><h3>Formateur et testeur indépendant</h3><p>Torres Formation, pour les entreprises et les organismes de formation.</p></li>
-  </ol>
   <ul class="atouts">
     <li><h3>Sur votre site ou chez votre client</h3><p>Je me déplace dans vos locaux, ou chez les clients des organismes de formation qui me missionnent.</p></li>
-    <li><h3>En français ou en espagnol</h3><p>Les deux langues sont parlées couramment, utile pour les équipes hispanophones.</p></li>
+    <li><h3>Vos machines, vos règles</h3><p>Pratique sur vos engins, avec vos consignes de sécurité et votre plan de circulation.</p></li>
     <li><h3>Un seul interlocuteur</h3><p>La personne que vous avez au téléphone est celle qui forme vos équipes.</p></li>
   </ul>
 </section>

@@ -31,7 +31,7 @@ sup{font-size:.55em;line-height:0}
 
 /* Fil rouge : progression de lecture */
 .fil{position:fixed;left:0;top:0;bottom:0;width:2px;z-index:60;pointer-events:none}
-.fil__trait{display:block;width:100%;height:100%;background:var(--rouge);transform:scaleY(var(--lecture,0));transform-origin:top}
+.fil__trait{display:block;width:100%;height:100%;background:var(--rouge);transform:scaleY(0);will-change:transform;transform-origin:top}
 
 /* Boutons */
 .bouton{display:inline-flex;align-items:center;justify-content:center;min-height:3.25rem;padding:.75rem 1.75rem;background:var(--os);color:var(--noir);font:600 1.125rem/1 var(--titres);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;border:0;cursor:pointer;clip-path:var(--facette);transition:background-color .2s,transform .2s}
@@ -44,7 +44,7 @@ sup{font-size:.55em;line-height:0}
 
 /* En-tête */
 .entete{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;padding:.9rem var(--marge);transition:background-color .3s,border-color .3s;border-bottom:1px solid transparent}
-.entete.est-defile{background:rgba(11,11,12,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-color:var(--filet)}
+.entete.est-defile{background:rgba(11,11,12,.94);border-color:var(--filet)}
 .entete__logo img{height:2.6rem;width:auto}
 .navigation{display:flex;align-items:center;gap:clamp(1rem,2vw,2rem)}
 .navigation a:not(.bouton){font:500 1.0625rem/1 var(--titres);letter-spacing:.07em;text-transform:uppercase;text-decoration:none;color:var(--acier);padding:.5rem 0;transition:color .2s}
@@ -86,14 +86,17 @@ sup{font-size:.55em;line-height:0}
 .note{margin-top:2.5rem;color:var(--acier)}
 
 /* Catalogue */
-.catalogue{border-top:1px solid var(--filet)}
-.catalogue__ligne{position:relative;display:grid;grid-template-columns:minmax(8rem,15rem) minmax(0,1fr) auto;align-items:center;gap:1rem 2.5rem;padding:1.6rem 0;border-bottom:1px solid var(--filet)}
-.catalogue__ligne::before{content:"";position:absolute;left:0;bottom:-1px;width:100%;height:1px;background:var(--rouge);transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
-.catalogue__ligne:hover::before{transform:scaleX(1)}
-.catalogue__code{font:700 clamp(2.2rem,4.4vw,3.75rem)/1 var(--titres);letter-spacing:.02em;text-transform:uppercase;color:var(--os);transition:transform .45s cubic-bezier(.2,.75,.2,1)}
-.catalogue__ligne:hover .catalogue__code{transform:translateX(.6rem)}
-.catalogue__nom p{color:var(--acier);margin-top:.2rem}
-.catalogue__role{font:500 1rem/1.2 var(--titres);letter-spacing:.1em;text-transform:uppercase;color:var(--acier);text-align:right}
+.engins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--filet);border-left:1px solid var(--filet)}
+.engin{position:relative;padding:2rem 1.6rem 1.8rem;border-right:1px solid var(--filet);border-bottom:1px solid var(--filet);transition:background .3s ease}
+.engin:hover{background:var(--anthracite)}
+.engin::before{content:"";position:absolute;left:0;top:-1px;width:100%;height:1px;background:var(--rouge);transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
+.engin:hover::before{transform:scaleX(1)}
+.engin svg{display:block;width:7.6rem;height:5.7rem;margin-bottom:1.4rem;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
+.engin:hover svg{transform:translateX(.4rem)}
+.engin h3{font:600 1.5rem/1.15 var(--titres);letter-spacing:.02em}
+.engin p{color:var(--acier);margin-top:.45rem;font-size:1rem;line-height:1.45}
+.engins__note{margin-top:2rem;max-width:44rem;color:var(--acier)}
+.engins__note strong{color:var(--os);font-weight:500}
 
 /* Parcours */
 .frise{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--pierre)}
@@ -192,8 +195,10 @@ sup{font-size:.55em;line-height:0}
   .accueil__visuel{order:-1;height:38svh;min-height:15rem}
   .accueil__titre{font-size:clamp(3.2rem,15vw,5.5rem)}
   .bloc__tete{grid-template-columns:1fr}
-  .catalogue__ligne{grid-template-columns:1fr auto;gap:.35rem 1rem}
-  .catalogue__nom{grid-column:1/-1;grid-row:2}
+  .engins{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .engin{padding:1.4rem 1rem 1.3rem}
+  .engin svg{width:4.6rem;height:3.45rem;margin-bottom:1rem}
+  .engin h3{font-size:1.25rem}
   .frise{grid-template-columns:1fr;border-top:0;border-left:1px solid var(--pierre)}
   .frise li{padding:0 0 2rem 1.5rem}
   .frise li::before{top:.3rem;left:-5px}

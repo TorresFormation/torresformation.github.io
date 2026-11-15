@@ -70,8 +70,8 @@ sup{font-size:.55em;line-height:0}
 .entete__menu[aria-expanded="true"] .entete__menu-traits::before{transform:rotate(-90deg)}
 
 /* Accueil */
-.accueil{position:relative;min-height:100svh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:center;gap:2rem;padding:6.5rem var(--marge) 4rem}
-.accueil__titre{font-size:clamp(3.4rem,8.6vw,8.25rem);letter-spacing:.015em;line-height:.9}
+.accueil{position:relative;min-height:100svh;display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);align-items:center;gap:2rem;padding:6.5rem var(--marge) 4rem}
+.accueil__titre{font-size:clamp(2.6rem,5.4vw,5.4rem);letter-spacing:.02em;line-height:.9}
 .ligne{display:block;overflow:hidden;padding-bottom:.06em}
 .ligne>span{display:block;transform:translateY(105%);animation:monte .9s cubic-bezier(.2,.75,.2,1) forwards}
 .ligne:nth-child(2)>span{animation-delay:.09s}
@@ -84,9 +84,9 @@ sup{font-size:.55em;line-height:0}
 .accueil__zone{margin-top:2.5rem;font:500 1rem/1.3 var(--titres);letter-spacing:.14em;text-transform:uppercase;color:var(--discret)}
 .accueil__chapo,.accueil__actions,.accueil__zone{opacity:0;animation:parait .8s .45s ease forwards}
 @keyframes parait{to{opacity:1}}
-.accueil__visuel{position:relative;height:min(78svh,46rem);min-height:22rem}
+.accueil__visuel{position:relative;height:min(84svh,50rem);min-height:22rem}
 .accueil__affiche,.accueil__scene{position:absolute;inset:0;width:100%;height:100%}
-.accueil__affiche{object-fit:contain;padding:8%}
+.accueil__affiche{object-fit:contain;padding:4%}
 /* Avec JavaScript, le logo statique reste caché : il ne sert que si la 3D est impossible (pas de logo fini avant l'animation). */
 .js .accueil__affiche{visibility:hidden}
 .js .accueil__visuel.sans-3d .accueil__affiche{visibility:visible;animation:parait .6s ease both}
@@ -262,7 +262,7 @@ sup{font-size:.55em;line-height:0}
   .entete__logo{position:relative;z-index:2}
   .accueil{grid-template-columns:1fr;padding-top:5.5rem;gap:0;align-content:start}
   .accueil__visuel{order:-1;height:38svh;min-height:15rem}
-  .accueil__titre{font-size:clamp(3.2rem,15vw,5.5rem)}
+  .accueil__titre{font-size:clamp(2.5rem,11.5vw,4rem)}
   .bloc__tete{grid-template-columns:1fr}
   .engins{grid-template-columns:repeat(2,minmax(0,1fr))}
   .engin{padding:1.4rem 1rem 1.3rem}
@@ -361,16 +361,19 @@ html[data-theme="clair"] .engin svg [fill="#0B0B0C"]{fill:#EDEAE4}
 .radar__cercle{fill:none;stroke:var(--filet);stroke-width:1}
 .radar__axe{fill:none;stroke:var(--filet);stroke-width:1;stroke-dasharray:2 5}
 .radar__km{font:500 9px var(--titres);letter-spacing:.12em;fill:var(--discret);text-transform:uppercase}
+.radar__route{fill:none;stroke:var(--encre);stroke-opacity:.6;stroke-linejoin:round}
 .radar__ville circle{fill:var(--encre)}
 .radar__ville text{font:500 11px var(--titres);letter-spacing:.06em;fill:var(--doux);text-transform:uppercase}
-.radar__base path{fill:var(--rouge)}
+.radar__base circle{fill:var(--rouge)}
 .radar__base text{font:700 12px var(--titres);letter-spacing:.08em;fill:var(--encre);text-transform:uppercase}
-.radar__balai{transform-box:view-box;transform-origin:255px 178px;opacity:0}
-.radar__balai path{stroke:var(--rouge);stroke-width:1.5}
-.js .radar .radar__ville{opacity:0}
-.js .radar.est-vu .radar__ville{opacity:1;transition:opacity .5s ease calc(.25s + var(--a) * 2.2s)}
-.js .radar.est-vu .radar__balai{animation:balai 2.6s linear .25s both}
-@keyframes balai{0%{opacity:1;transform:rotate(0)}92%{opacity:1}100%{opacity:0;transform:rotate(360deg)}}
+.radar__pouls{fill:none!important;stroke:var(--rouge);stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pouls 2.6s ease-out infinite}
+@keyframes pouls{0%{transform:scale(1);opacity:.9}100%{transform:scale(4.2);opacity:0}}
+@keyframes trace{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.js .radar .radar__route{stroke-dasharray:1;stroke-dashoffset:1}
+.js .radar.est-vu .radar__route{animation:trace var(--l) linear var(--d) forwards}
+.js .radar .radar__ville{opacity:0;transform-box:fill-box;transform-origin:center}
+.js .radar.est-vu .radar__ville{animation:ville .5s var(--elan) var(--d) forwards}
+@keyframes ville{from{opacity:0}to{opacity:1}}
 .js .radar .radar__cercle{transform-box:view-box;transform-origin:255px 178px;transform:scale(.2);opacity:0;transition:transform 1s var(--elan),opacity .6s}
 .js .radar.est-vu .radar__cercle{transform:none;opacity:1}
 

@@ -274,13 +274,13 @@ function demarrer() {
     onde.visible = onde1; onde2.visible = onde2v;
     if (onde1) {
       const u = s / 1.0, e = 1 - Math.pow(1 - u, 2.2);
-      onde.position.set(0, 0.5, 0.3);
+      onde.position.set(0, 0.5, -0.7);
       onde.scale.setScalar(0.2 + e * (rayonMax - 0.2));
       onde.material.opacity = 0.95 * Math.pow(1 - u, 1.7);
     }
     if (onde2v) {
       const u = (s - 0.1) / 1.0, e = 1 - Math.pow(1 - u, 2.2);
-      onde2.position.set(0, 0.5, 0.3);
+      onde2.position.set(0, 0.5, -0.7);
       onde2.scale.setScalar(0.15 + e * (rayonMax * 0.72 - 0.15));
       onde2.material.opacity = 0.6 * Math.pow(1 - u, 1.7);
     }

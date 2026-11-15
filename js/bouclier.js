@@ -191,10 +191,12 @@ function demarrer() {
   })();
 
   // Onde de choc : un anneau lumineux qui s'élargit.
-  const onde = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 64),
-    new THREE.MeshBasicMaterial({ color: 0xa9a59e, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
-  onde.visible = false;
-  ensemble.add(onde);
+  const matOnde = () => new THREE.MeshBasicMaterial({ color: 0xf2ede4, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+  const onde = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96), matOnde());
+  const onde2 = new THREE.Mesh(new THREE.RingGeometry(0.965, 1, 96), matOnde());
+  onde.visible = onde2.visible = false;
+  ensemble.add(onde, onde2);
+  let rayonMax = 1.2;     // l'onde s'éteint avant d'atteindre le bord de la toile : aucun bord visible
 
   // Étincelles : une volée à l'impact.
   const NB = lent ? 24 : 60;
@@ -268,11 +270,19 @@ function demarrer() {
     const clac = t > T_AILES_FIN ? 7 * Math.exp(-(t - T_AILES_FIN) * 16) : 0;       // petit « clac » des ailes
     eclair.intensity = (s > 0 ? 14 * Math.exp(-s * 8) : 0) + clac * 0.6;
     eclair.position.set(0, 0.7, 1.6);
-    onde.visible = s > 0 && s < 0.75;
-    if (onde.visible) {
+    const onde1 = s > 0 && s < 1.0, onde2v = s > 0.1 && s < 1.1;
+    onde.visible = onde1; onde2.visible = onde2v;
+    if (onde1) {
+      const u = s / 1.0, e = 1 - Math.pow(1 - u, 2.2);
       onde.position.set(0, 0.5, 0.3);
-      onde.scale.setScalar(0.25 + Math.sin(Math.min(1, s / 0.75) * 1.5708) * 0.85);   // reste dans le cadre : aucun bord de toile visible
-      onde.material.opacity = 0.45 * Math.pow(1 - s / 0.75, 2.4);
+      onde.scale.setScalar(0.2 + e * (rayonMax - 0.2));
+      onde.material.opacity = 0.95 * Math.pow(1 - u, 1.7);
+    }
+    if (onde2v) {
+      const u = (s - 0.1) / 1.0, e = 1 - Math.pow(1 - u, 2.2);
+      onde2.position.set(0, 0.5, 0.3);
+      onde2.scale.setScalar(0.15 + e * (rayonMax * 0.72 - 0.15));
+      onde2.material.opacity = 0.6 * Math.pow(1 - u, 1.7);
     }
     if (s > 0 && s < 1.05) {
       etincelles.visible = true;
@@ -335,12 +345,16 @@ function demarrer() {
   const auRepos = () => !tire && Math.abs(pivot.x) + Math.abs(pivot.y) + Math.abs(pivot.vx) + Math.abs(pivot.vy) < 0.002;
 
   function taille() {
-    const l = boite.clientWidth, h = boite.clientHeight;
-    if (!l || !h) return;
+    const l = toile.clientWidth, h = toile.clientHeight;
+    const bl = boite.clientWidth, bh = boite.clientHeight;
+    if (!l || !h || !bl || !bh) return;
     rendu.setPixelRatio(definition());
     rendu.setSize(l, h, false);
     camera.aspect = l / h;
-    camera.position.z = 5.2 / Math.min(1, camera.aspect * 1.2);   // recule en format étroit
+    const K = h / bh;                       // la toile déborde de la boîte : on garde le logo à la même taille
+    camera.position.z = 5.2 * K / Math.min(1, (bl / bh) * 1.2);   // recule en format étroit
+    const demi = (camera.position.z - 0.3) * Math.tan(16 * Math.PI / 180);
+    rayonMax = 0.92 * Math.min(demi, demi * camera.aspect);
     camera.updateProjectionMatrix();
     if (pret) dessiner();      // jamais d'image avant que la scène soit posée au début de l'animation
   }
@@ -463,7 +477,7 @@ function demarrer() {
   defilement();
 
   // Compile tous les matériaux avant la première image : pas d'à-coup au démarrage.
-  for (const o of [aileG, aileD, epee, fil, halo, onde, etincelles, soudure]) o.visible = true;
+  for (const o of [aileG, aileD, epee, fil, halo, onde, onde2, etincelles, soudure]) o.visible = true;
   rendu.compile(scene, camera);
   pret = true;
   if (fige !== undefined) {

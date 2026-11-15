@@ -190,13 +190,54 @@ function demarrer() {
     sp.visible = false; epee.add(sp); return sp;
   })();
 
-  // Onde de choc : un anneau lumineux qui s'élargit.
-  const matOnde = () => new THREE.MeshBasicMaterial({ color: 0xf2ede4, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
-  const onde = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96), matOnde());
-  const onde2 = new THREE.Mesh(new THREE.RingGeometry(0.965, 1, 96), matOnde());
-  onde.visible = onde2.visible = false;
-  ensemble.add(onde, onde2);
+  // Onde de choc : un front d'air doux et irrégulier qui s'élargit derrière le bouclier et se dissout.
+  const onde = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uR: { value: 0 }, uL: { value: 0.05 }, uA: { value: 0 }, uC: { value: new THREE.Color(0xf2ede4) } },
+    vertexShader: 'varying vec2 vU; void main(){ vU = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `varying vec2 vU; uniform float uR, uL, uA; uniform vec3 uC;
+      float h(float n){ return fract(sin(n) * 43758.5453); }
+      float bruit(float a){ float i = floor(a), f = fract(a); f = f * f * (3.0 - 2.0 * f); return mix(h(i), h(i + 1.0), f); }
+      void main(){
+        float d = length(vU), a = atan(vU.y, vU.x);
+        float irr = bruit(a * 6.0 + 3.0) * 0.6 + bruit(a * 17.0 + uR * 9.0) * 0.4;     // front irrégulier, qui se déchire
+        float r = uR * (0.94 + irr * 0.08);
+        float front = exp(-pow((d - r) / uL, 2.0));                 // crête du front
+        float sillage = smoothstep(r, r - uL * 5.0, d) * step(d, r) * 0.22;   // air comprimé derrière la crête
+        float trous = smoothstep(0.25, 0.75, bruit(a * 9.0 - uR * 4.0));
+        float v = (front * (0.55 + 0.45 * trous) + sillage) * uA * (1.0 - smoothstep(0.82, 1.0, d));
+        gl_FragColor = vec4(uC * v, v);
+      }`
+  }));
+  onde.visible = false;
+  ensemble.add(onde);
   let rayonMax = 1.2;     // l'onde s'éteint avant d'atteindre le bord de la toile : aucun bord visible
+
+  // Poussière soulevée : particules douces projetées le long du front, freinées par l'air puis dissoutes.
+  const ND = lent ? 70 : 180;
+  const poPos = new Float32Array(ND * 3), poDir = new Float32Array(ND * 3), poTaille = new Float32Array(ND), poAlpha = new Float32Array(ND), poVit = new Float32Array(ND), poVie = new Float32Array(ND);
+  let graine0 = 7;
+  const alea0 = () => { graine0 = (graine0 * 16807) % 2147483647; return graine0 / 2147483647; };
+  for (let i = 0; i < ND; i++) {
+    const ang = alea0() * Math.PI * 2, z = (alea0() - 0.5) * 0.9;
+    poDir[i * 3] = Math.cos(ang); poDir[i * 3 + 1] = Math.sin(ang) * 0.85; poDir[i * 3 + 2] = z;
+    poVit[i] = 0.55 + Math.pow(alea0(), 0.6) * 0.75;               // fraction du rayon atteint
+    poTaille[i] = 6 + Math.pow(alea0(), 3) * 26;                     // quelques gros flocons, beaucoup de grains fins
+    poVie[i] = 0.7 + alea0() * 0.9;
+  }
+  const gPo = new THREE.BufferGeometry();
+  gPo.setAttribute('position', new THREE.BufferAttribute(poPos, 3));
+  gPo.setAttribute('taille', new THREE.BufferAttribute(poTaille, 1));
+  gPo.setAttribute('alpha', new THREE.BufferAttribute(poAlpha, 1));
+  const mPo = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uEch: { value: 1 }, uC: { value: new THREE.Color(0xd9d3c8) } },
+    vertexShader: 'attribute float taille; attribute float alpha; varying float vA; uniform float uEch; void main(){ vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = taille * uEch / -mv.z; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying float vA; uniform vec3 uC; void main(){ float d = length(gl_PointCoord - 0.5) * 2.0; float v = pow(max(0.0, 1.0 - d), 1.8) * vA; gl_FragColor = vec4(uC * v, v); }'
+  });
+  const poussiere = new THREE.Points(gPo, mPo);
+  poussiere.visible = false; poussiere.frustumCulled = false;
+  ensemble.add(poussiere);
 
   // Étincelles : une volée à l'impact.
   const NB = lent ? 24 : 60;
@@ -213,7 +254,7 @@ function demarrer() {
   etPos.set(etDepart);
   const gEt = new THREE.BufferGeometry();
   gEt.setAttribute('position', new THREE.BufferAttribute(etPos, 3));
-  const mEt = new THREE.PointsMaterial({ color: 0xa9a59e, size: 0.035, transparent: true, opacity: 0, depthWrite: false });
+  const mEt = new THREE.PointsMaterial({ color: 0xfff1d6, size: 0.028, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   const etincelles = new THREE.Points(gEt, mEt);
   etincelles.visible = false; etincelles.frustumCulled = false;
   ensemble.add(etincelles);
@@ -270,19 +311,27 @@ function demarrer() {
     const clac = t > T_AILES_FIN ? 7 * Math.exp(-(t - T_AILES_FIN) * 16) : 0;       // petit « clac » des ailes
     eclair.intensity = (s > 0 ? 14 * Math.exp(-s * 8) : 0) + clac * 0.6;
     eclair.position.set(0, 0.7, 1.6);
-    const onde1 = s > 0 && s < 1.0, onde2v = s > 0.1 && s < 1.1;
-    onde.visible = onde1; onde2.visible = onde2v;
-    if (onde1) {
-      const u = s / 1.0, e = 1 - Math.pow(1 - u, 2.2);
+    // Onde : départ très rapide, freinage, dissolution progressive.
+    const DUREE_ONDE = 1.25;
+    onde.visible = s > 0 && s < DUREE_ONDE;
+    if (onde.visible) {
+      const u = s / DUREE_ONDE, e = 1 - Math.pow(1 - u, 3);
       onde.position.set(0, 0.5, -0.7);
-      onde.scale.setScalar(0.2 + e * (rayonMax - 0.2));
-      onde.material.opacity = 0.95 * Math.pow(1 - u, 1.7);
+      onde.scale.setScalar(rayonMax);
+      onde.material.uniforms.uR.value = 0.08 + e * 0.8;
+      onde.material.uniforms.uL.value = 0.025 + u * 0.09;           // le front s'épaissit en s'éloignant
+      onde.material.uniforms.uA.value = 1.4 * Math.pow(1 - u, 1.5) * Math.min(1, s * 30);
     }
-    if (onde2v) {
-      const u = (s - 0.1) / 1.0, e = 1 - Math.pow(1 - u, 2.2);
-      onde2.position.set(0, 0.5, -0.7);
-      onde2.scale.setScalar(0.15 + e * (rayonMax * 0.72 - 0.15));
-      onde2.material.opacity = 0.6 * Math.pow(1 - u, 1.7);
+    poussiere.visible = s > 0 && s < 1.7;
+    if (poussiere.visible) {
+      mPo.uniforms.uEch.value = toile.clientHeight * rendu.getPixelRatio() / 9;
+      for (let i = 0; i < ND; i++) {
+        const j = i * 3, k = Math.min(1, s / poVie[i]);
+        const r = rayonMax * poVit[i] * (1 - Math.exp(-s * 4.5)) / (1 - Math.exp(-4.5 * poVie[i]));   // freinée par l'air
+        poPos[j] = poDir[j] * r; poPos[j + 1] = 0.5 + poDir[j + 1] * r + s * s * 0.12; poPos[j + 2] = -0.5 + poDir[j + 2] * r;
+        poAlpha[i] = (1 - k) * (1 - k) * Math.min(1, s * 20) * 0.6;
+      }
+      gPo.attributes.position.needsUpdate = true; gPo.attributes.alpha.needsUpdate = true;
     }
     if (s > 0 && s < 1.05) {
       etincelles.visible = true;
@@ -477,7 +526,7 @@ function demarrer() {
   defilement();
 
   // Compile tous les matériaux avant la première image : pas d'à-coup au démarrage.
-  for (const o of [aileG, aileD, epee, fil, halo, onde, onde2, etincelles, soudure]) o.visible = true;
+  for (const o of [aileG, aileD, epee, fil, halo, onde, poussiere, etincelles, soudure]) o.visible = true;
   rendu.compile(scene, camera);
   pret = true;
   if (fige !== undefined) {

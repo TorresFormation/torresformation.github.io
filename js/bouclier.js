@@ -1,7 +1,8 @@
 /* Torres Formation — le bouclier est forgé à l'ouverture :
    trois pièces au rouge incandescent convergent, l'épée (le T) se plante, un cordon de soudure
-   rouge scelle l'ensemble, puis tout refroidit en métal brossé.
-   three.js est fourni localement. Si WebGL manque, l'affiche statique du logo reste affichée. */
+   rouge scelle l'ensemble, puis tout refroidit jusqu'aux teintes exactes du logo de la charte
+   (os, acier, pierre, rouge). Au doigt ou à la souris, on peut le faire pivoter.
+   three.js est fourni localement. Si WebGL manque, le logo statique s'affiche. */
 import * as THREE from '../vendor/three.module.min.js';
 
 const boite = document.getElementById('visuel');
@@ -25,7 +26,7 @@ function demarrer() {
   let rendu;
   try {
     rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: !lent, alpha: true, powerPreference: 'high-performance' });
-  } catch (e) { return; }
+  } catch (e) { boite.classList.add('sans-3d'); return; }
 
   const petit = window.matchMedia('(max-width: 860px)');
   // Définition d'image : démarre raisonnable, baisse toute seule si l'appareil peine.
@@ -34,8 +35,8 @@ function demarrer() {
   const definition = () => Math.min(window.devicePixelRatio || 1, paliers[palier]);
   rendu.setPixelRatio(definition());
   rendu.outputColorSpace = THREE.SRGBColorSpace;
-  rendu.toneMapping = THREE.ACESFilmicToneMapping;
-  rendu.toneMappingExposure = 1.05;
+  rendu.toneMapping = THREE.NeutralToneMapping;     // garde les couleurs de la charte fidèles
+  rendu.toneMappingExposure = 1;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
@@ -43,7 +44,7 @@ function demarrer() {
 
   // Lumières
   scene.add(new THREE.HemisphereLight(0xedeae4, 0x0b0b0c, 0.4));
-  const cle = new THREE.DirectionalLight(0xfff6ea, 2.3);
+  const cle = new THREE.DirectionalLight(0xffffff, 2.3);
   cle.position.set(-3.5, 4, 6);
   scene.add(cle);
   const contre = new THREE.DirectionalLight(0xa9b0bc, 1.3);
@@ -138,15 +139,16 @@ function demarrer() {
     return g;
   }
 
-  // Métal : acier de la lame, métal sombre mat des ailes. La texture arrive après (voir plus bas).
-  const metal = (couleur, extra) => new THREE.MeshStandardMaterial(Object.assign({
-    color: couleur, metalness: 0.85, roughness: 0.8, envMapIntensity: 1.1, flatShading: true }, extra));
+  // Matière : les trois teintes du logo officiel (os, acier, pierre), finition satinée lisse, sans texture.
+  // Facettes nettes comme le dessin du logo ; les reflets restent doux pour ne pas dénaturer les couleurs.
+  const matiere = (couleur, extra) => new THREE.MeshStandardMaterial(Object.assign({
+    color: couleur, metalness: 0.2, roughness: 0.5, envMapIntensity: 0.55, flatShading: true }, extra));
   const arete = (x) => (Math.abs(x - 100) < 0.01 ? 15 : 0); // l'arête centrale de la lame est en relief
   const plat = (z) => () => z;
 
-  const mLG = metal(0xe2ded6, { metalness: 0.7 });
-  const mLD = metal(0xaaa69f, { metalness: 0.88, roughness: 0.7 });
-  const mAile = metal(0x77736d, { metalness: 0.8, roughness: 1 });
+  const mLG = matiere(0xedeae4, { roughness: 0.55 });              // lame gauche : os
+  const mLD = matiere(0xa9a59e, { roughness: 0.45 });              // lame droite : acier
+  const mAile = matiere(0x6e6b66, { roughness: 0.6 });             // ailes : pierre
   const metaux = [mLG, mLD, mAile];
 
   // Le bouclier (deux ailes) et l'épée (le T), montés séparément : tout converge vers le centre.
@@ -165,7 +167,7 @@ function demarrer() {
   const gFil = prisme([[100, FIL_HAUT], [103, 62], [101.7, 206], [100, FIL_BAS], [98.3, 206], [97, 62]], plat(18), 8);
   const yHaut = P(100, FIL_HAUT)[1], yBas = P(100, FIL_BAS)[1];
   gFil.translate(0, -yHaut, 0);
-  const mFil = new THREE.MeshStandardMaterial({ color: 0xc22a22, emissive: 0xc22a22, emissiveIntensity: 0.6, roughness: 0.4, metalness: 0.1, flatShading: true, side: THREE.DoubleSide });
+  const mFil = new THREE.MeshStandardMaterial({ color: 0xc22a22, emissive: 0xc22a22, emissiveIntensity: 0.6, roughness: 0.5, metalness: 0, flatShading: true, side: THREE.DoubleSide });
   const fil = new THREE.Mesh(gFil, mFil);
   fil.position.y = yHaut;
   fil.visible = false;
@@ -282,7 +284,7 @@ function demarrer() {
     else teinte.copy(orange).lerp(rouge, (froid - 0.35) / 0.65);
     mFil.emissive.copy(teinte);
     mFil.color.copy(teinte);
-    mFil.emissiveIntensity = 2.4 - 1.8 * froid;
+    mFil.emissiveIntensity = 2.4 - 2.1 * froid;
     const yTete = yHaut + (yBas - yHaut) * trace;
     halo.visible = trace > 0 && trace < 1;
     halo.position.set(0, yTete, 0.26);
@@ -293,11 +295,19 @@ function demarrer() {
   }
 
   // État animé
-  const cible = { x: 0, y: 0 };      // pointeur, de -1 à 1
+  const cible = { x: 0, y: 0 };      // pointeur (souris), de -1 à 1
   const lisse = { x: 0, y: 0, tour: 0 };
   let tourCible = 0;
   let visible = true, actif = false, pret = false, t0 = 0, dernier = 0;
   let mesure = 0, images = 0;
+  // Si le logo statique a déjà été montré (démarrage très lent), on ne rejoue pas la forge.
+  const dejaVu = calme || boite.classList.contains('sans-3d');
+
+  // Pivot au doigt (ou souris maintenue) : angle libre pendant le geste, retour en souplesse au relâchement.
+  const pivot = { x: 0, y: 0, vx: 0, vy: 0 };
+  let tire = null;
+  const MAX_X = 1.1, MAX_Y = 0.45;
+  const auRepos = () => !tire && Math.abs(pivot.x) + Math.abs(pivot.y) + Math.abs(pivot.vx) + Math.abs(pivot.vy) < 0.002;
 
   function taille() {
     const l = boite.clientWidth, h = boite.clientHeight;
@@ -307,7 +317,7 @@ function demarrer() {
     camera.aspect = l / h;
     camera.position.z = 5.9 / Math.min(1, camera.aspect * 1.2);   // recule en format étroit
     camera.updateProjectionMatrix();
-    dessiner();
+    if (pret) dessiner();      // jamais d'image avant que la scène soit posée au début de l'animation
   }
 
   function defilement() {
@@ -321,14 +331,15 @@ function demarrer() {
   function image(maintenant) {
     actif = false;
     if (!visible || !pret) return;
-    if (!t0) { t0 = maintenant; dernier = maintenant; }
+    if (!t0) { t0 = maintenant - (dejaVu ? 99000 : 0); dernier = maintenant; }
     const brut = (maintenant - dernier) / 1000;
-    const t = calme ? 99 : (maintenant - t0) / 1000;
-    const enAnim = !calme && t < FIN;
-    const mouvement = Math.abs(tourCible - lisse.tour) > 0.001 || Math.abs(cible.x - lisse.x) > 0.001 || Math.abs(cible.y - lisse.y) > 0.001;
+    const t = (maintenant - t0) / 1000;
+    const enAnim = t < FIN;
+    const libre = auRepos();
+    const mouvement = !libre || Math.abs(tourCible - lisse.tour) > 0.001 || Math.abs(cible.x - lisse.x) > 0.001 || Math.abs(cible.y - lisse.y) > 0.001;
 
-    // Après l'animation, on se contente de 30 images par seconde : suffisant pour un flottement doux.
-    if (!enAnim && brut < 0.03) { actif = true; requestAnimationFrame(image); return; }
+    // Au repos, 30 images par seconde suffisent ; pendant l'animation ou un geste, pleine cadence.
+    if (!enAnim && libre && brut < 0.03) { actif = true; requestAnimationFrame(image); return; }
 
     const dt = Math.min(0.05, brut);
     dernier = maintenant;
@@ -337,10 +348,19 @@ function demarrer() {
     lisse.y += (cible.y - lisse.y) * k;
     lisse.tour += (tourCible - lisse.tour) * (1 - Math.exp(-dt * 3.2));
 
+    // Ressort amorti : le logo revient de face avec un léger rebond.
+    if (!tire) {
+      for (const [a, v] of [['x', 'vx'], ['y', 'vy']]) {
+        pivot[v] += (-38 * pivot[a] - 7.5 * pivot[v]) * dt;
+        pivot[a] += pivot[v] * dt;
+      }
+      if (auRepos()) pivot.x = pivot.y = pivot.vx = pivot.vy = 0;
+    }
+
     poser(t);
     const flotte = calme ? 0 : 1;
-    ensemble.rotation.y = lisse.x * 0.5 + lisse.tour * 0.7 + Math.sin(t * 0.45) * 0.1 * flotte;
-    ensemble.rotation.x = -lisse.y * 0.3 + Math.sin(t * 0.33) * 0.035 * flotte;
+    ensemble.rotation.y = lisse.x * 0.5 + lisse.tour * 0.7 + pivot.x + Math.sin(t * 0.45) * 0.1 * flotte;
+    ensemble.rotation.x = -lisse.y * 0.3 + pivot.y + Math.sin(t * 0.33) * 0.035 * flotte;
     ensemble.position.y += Math.sin(t * 0.6) * 0.04 * flotte;
     dessiner();
 
@@ -365,11 +385,39 @@ function demarrer() {
   // Événements
   if (window.matchMedia('(pointer: fine)').matches) {
     window.addEventListener('pointermove', (ev) => {
+      if (ev.pointerType !== 'mouse') return;
       cible.x = (ev.clientX / window.innerWidth) * 2 - 1;
       cible.y = (ev.clientY / window.innerHeight) * 2 - 1;
       reveiller();
     }, { passive: true });
   }
+
+  // Geste : glisser horizontalement fait pivoter le logo ; le défilement vertical de la page reste libre (touch-action: pan-y).
+  toile.addEventListener('pointerdown', (ev) => {
+    if (ev.button > 0) return;
+    tire = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, px: pivot.x, py: pivot.y, l: Math.max(200, toile.clientWidth) };
+    pivot.vx = pivot.vy = 0;
+    try { toile.setPointerCapture(ev.pointerId); } catch (e) { /* rien */ }
+    reveiller();
+  });
+  toile.addEventListener('pointermove', (ev) => {
+    if (!tire || ev.pointerId !== tire.id) return;
+    const dx = (ev.clientX - tire.x) / tire.l, dy = (ev.clientY - tire.y) / tire.l;
+    // Résistance progressive près des butées : on sent la limite sans blocage sec.
+    const amorti = (v, m) => m * Math.tanh(v / m);
+    pivot.x = amorti(tire.px + dx * 3.2, MAX_X);
+    pivot.y = amorti(tire.py + dy * 1.6, MAX_Y);
+    reveiller();
+  });
+  const lacher = (ev) => {
+    if (!tire || ev.pointerId !== tire.id) return;
+    tire = null;
+    reveiller();
+  };
+  toile.addEventListener('pointerup', lacher);
+  toile.addEventListener('pointercancel', lacher);
+  toile.addEventListener('lostpointercapture', lacher);
+
   window.addEventListener('scroll', defilement, { passive: true });
   new ResizeObserver(taille).observe(boite);
   new IntersectionObserver(([en]) => { visible = en.isIntersecting && !document.hidden; reveiller(); }).observe(boite);
@@ -377,41 +425,30 @@ function demarrer() {
     visible = !document.hidden && boite.getBoundingClientRect().bottom > 0;
     reveiller();
   });
-  toile.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); visible = false; boite.classList.remove('est-3d'); });
-  toile.addEventListener('webglcontextrestored', () => { visible = true; boite.classList.add('est-3d'); reveiller(); });
+  toile.addEventListener('webglcontextlost', (ev) => {
+    ev.preventDefault(); visible = false;
+    boite.classList.remove('est-3d'); boite.classList.add('sans-3d');
+  });
+  toile.addEventListener('webglcontextrestored', () => { visible = true; boite.classList.remove('sans-3d'); boite.classList.add('est-3d'); reveiller(); });
 
   taille();
   defilement();
-  boite.classList.add('est-3d');       // l'affiche statique s'efface : l'animation va commencer
 
-  // Texture de métal brossé : une petite image pré-calculée, chargée une seule fois (aucun calcul pendant l'animation).
-  const chargerTexture = () => new Promise((fini) => {
-    const stop = setTimeout(() => fini(null), 2500);
-    new THREE.TextureLoader().load(new URL('../assets/tex/brosse.jpg', import.meta.url).href,
-      (tex) => { clearTimeout(stop); fini(tex); },
-      undefined,
-      () => { clearTimeout(stop); fini(null); });
-  });
-
-  chargerTexture().then((tex) => {
-    if (tex) {
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.anisotropy = Math.min(4, rendu.capabilities.getMaxAnisotropy());
-      tex.repeat.set(1.5, 1.5);
-      for (const m of metaux) { m.roughnessMap = tex; m.bumpMap = tex; m.bumpScale = 0.35; }
-      mLG.roughness = 0.75; mLD.roughness = 0.62; mAile.roughness = 1;
-    }
-    // Compile tous les matériaux avant la première image : pas d'à-coup au démarrage.
-    for (const o of [aileG, aileD, epee, fil, halo, onde, etincelles]) o.visible = true;
-    rendu.compile(scene, camera);
-    pret = true;
-    if (fige !== undefined) { poser(parseFloat(fige)); dessiner(); return; }
-    poser(calme ? 99 : 0);
+  // Compile tous les matériaux avant la première image : pas d'à-coup au démarrage.
+  for (const o of [aileG, aileD, epee, fil, halo, onde, etincelles]) o.visible = true;
+  rendu.compile(scene, camera);
+  pret = true;
+  if (fige !== undefined) {
+    poser(parseFloat(fige)); dessiner();
+  } else {
+    poser(dejaVu ? 99 : 0);     // première image : scène vide, les pièces ne sont pas encore arrivées
     dessiner();
-    reveiller();
-  });
+  }
+  boite.classList.remove('sans-3d');
+  boite.classList.add('est-3d');       // la toile n'apparaît qu'une fois la première image correcte dessinée
+  reveiller();
 }
 
 if (boite && toile) {
-  try { demarrer(); } catch (e) { boite.classList.remove('est-3d'); }
+  try { demarrer(); } catch (e) { boite.classList.remove('est-3d'); boite.classList.add('sans-3d'); }
 }

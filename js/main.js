@@ -13,6 +13,12 @@
   var annee = document.getElementById('annee');
   if (annee) annee.textContent = new Date().getFullYear();
 
+  // Logo d'accueil : si la 3D n'a pas démarré à temps (navigateur ancien, WebGL absent), le logo statique s'affiche.
+  var visuel = document.getElementById('visuel');
+  if (visuel) setTimeout(function () {
+    if (!visuel.classList.contains('est-3d')) visuel.classList.add('sans-3d');
+  }, 4000);
+
   // En-tête et fil rouge de lecture
   var entete = document.getElementById('entete');
   var trait = document.querySelector('.fil__trait');

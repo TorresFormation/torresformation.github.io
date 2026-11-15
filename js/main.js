@@ -15,13 +15,14 @@
 
   // En-tête et fil rouge de lecture
   var entete = document.getElementById('entete');
+  var trait = document.querySelector('.fil__trait');
   var attente = false;
   function surDefilement() {
     attente = false;
     var y = window.scrollY || 0;
     if (entete) entete.classList.toggle('est-defile', y > 24);
     var max = doc.scrollHeight - window.innerHeight;
-    doc.style.setProperty('--lecture', max > 0 ? Math.min(1, y / max).toFixed(4) : 0);
+    if (trait) trait.style.transform = 'scaleY(' + (max > 0 ? Math.min(1, y / max).toFixed(4) : 0) + ')';
   }
   window.addEventListener('scroll', function () {
     if (!attente) { attente = true; requestAnimationFrame(surDefilement); }

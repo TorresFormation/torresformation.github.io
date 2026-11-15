@@ -361,16 +361,18 @@ html[data-theme="clair"] .engin svg [fill="#0B0B0C"]{fill:#EDEAE4}
 .radar__cercle{fill:none;stroke:var(--filet);stroke-width:1}
 .radar__axe{fill:none;stroke:var(--filet);stroke-width:1;stroke-dasharray:2 5}
 .radar__km{font:500 9px var(--titres);letter-spacing:.12em;fill:var(--discret);text-transform:uppercase}
-.radar__route{fill:none;stroke:var(--encre);stroke-opacity:.6;stroke-linejoin:round}
+.radar__route{fill:none;stroke-linejoin:round}
+.radar__route--p{stroke:var(--rouge);stroke-width:2}
+.radar__route--m{stroke:var(--encre);stroke-opacity:.6;stroke-width:1}
 .radar__ville circle{fill:var(--encre)}
 .radar__ville text{font:500 11px var(--titres);letter-spacing:.06em;fill:var(--doux);text-transform:uppercase}
 .radar__base circle{fill:var(--rouge)}
 .radar__base text{font:700 12px var(--titres);letter-spacing:.08em;fill:var(--encre);text-transform:uppercase}
 .radar__pouls{fill:none!important;stroke:var(--rouge);stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pouls 2.6s ease-out infinite}
 @keyframes pouls{0%{transform:scale(1);opacity:.9}100%{transform:scale(4.2);opacity:0}}
-@keyframes trace{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-.js .radar .radar__route{stroke-dasharray:1;stroke-dashoffset:1}
+@keyframes trace{to{stroke-dashoffset:0}}
 .js .radar.est-vu .radar__route{animation:trace var(--l) linear var(--d) forwards}
+html:not(.js) .radar__route{stroke-dasharray:none}
 .js .radar .radar__ville{opacity:0;transform-box:fill-box;transform-origin:center}
 .js .radar.est-vu .radar__ville{animation:ville .5s var(--elan) var(--d) forwards}
 @keyframes ville{from{opacity:0}to{opacity:1}}

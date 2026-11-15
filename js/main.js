@@ -55,17 +55,74 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermer(); });
   }
 
-  // Titres de bloc : apparition au défilement
+  // Thème clair / sombre : mémorisé, appliqué avant l'affichage (voir <head>), bascule en cercle depuis le bouton
+  var bascule = document.getElementById('bascule');
+  var metaTheme = document.querySelector('meta[name="theme-color"]');
+  var calme = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function refleterTheme() {
+    var clair = doc.dataset.theme === 'clair';
+    if (bascule) {
+      bascule.setAttribute('aria-pressed', String(clair));
+      bascule.setAttribute('aria-label', clair ? 'Passer en thème sombre' : 'Passer en thème clair');
+    }
+    if (metaTheme) metaTheme.setAttribute('content', clair ? '#EDEAE4' : '#0B0B0C');
+  }
+  function changerTheme(ev) {
+    var versClair = doc.dataset.theme !== 'clair';
+    function appliquer() {
+      if (versClair) doc.dataset.theme = 'clair'; else delete doc.dataset.theme;
+      try { localStorage.setItem('tf:theme', versClair ? 'clair' : 'sombre'); } catch (e) { /* rien */ }
+      refleterTheme();
+      document.dispatchEvent(new Event('tf:theme'));
+    }
+    if (!document.startViewTransition || calme) { appliquer(); return; }
+    var r = bascule.getBoundingClientRect();
+    var x = ev && ev.clientX ? ev.clientX : r.left + r.width / 2;
+    var y = ev && ev.clientY ? ev.clientY : r.top + r.height / 2;
+    var rayon = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    document.startViewTransition(appliquer).ready.then(function () {
+      doc.animate({ clipPath: ['circle(0 at ' + x + 'px ' + y + 'px)', 'circle(' + rayon + 'px at ' + x + 'px ' + y + 'px)'] },
+        { duration: 700, easing: 'cubic-bezier(.2,.75,.2,1)', pseudoElement: '::view-transition-new(root)' });
+    }).catch(function () { /* transition annulée : le thème est déjà appliqué */ });
+  }
+  if (bascule) bascule.addEventListener('click', changerTheme);
+  refleterTheme();
+
+  // Apparitions au défilement : titres de bloc, puis éléments de chaque grille, en cascade
   var tetes = document.querySelectorAll('.bloc__tete');
+  var groupes = ['.engins', '.atouts', '.etapes', '.regions', '.questions', '.coordonnees', '.avis-actions'];
+  var apparus = [];
+  groupes.forEach(function (sel) {
+    var g = document.querySelector(sel);
+    if (!g) return;
+    Array.prototype.forEach.call(g.children, function (el, i) { el.classList.add('r'); el.style.setProperty('--i', i % 8); apparus.push(el); });
+  });
+  ['.planning', '.engins__note', '.formulaire', '.avis-defile'].forEach(function (sel) {
+    var el = document.querySelector(sel);
+    if (el) { el.classList.add('r'); apparus.push(el); }
+  });
+  var radar = document.getElementById('radar');
+  var aVoir = Array.prototype.slice.call(tetes).concat(apparus, radar ? [radar] : []);
   if ('IntersectionObserver' in window) {
     var vue = new IntersectionObserver(function (entrees) {
       entrees.forEach(function (e) {
         if (e.isIntersecting) { e.target.classList.add('est-vu'); vue.unobserve(e.target); }
       });
-    }, { rootMargin: '0px 0px -12% 0px' });
-    tetes.forEach(function (t) { vue.observe(t); });
+    }, { rootMargin: '0px 0px -10% 0px' });
+    aVoir.forEach(function (t) { vue.observe(t); });
   } else {
-    tetes.forEach(function (t) { t.classList.add('est-vu'); });
+    aVoir.forEach(function (t) { t.classList.add('est-vu'); });
+  }
+
+  // Cartes formation : un halo discret suit le pointeur
+  if (window.matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('.engin').forEach(function (carte) {
+      carte.addEventListener('pointermove', function (e) {
+        var r = carte.getBoundingClientRect();
+        carte.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        carte.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      }, { passive: true });
+    });
   }
 
   // Avis Google : duplication automatique pour un défilement continu sans coupure
@@ -101,7 +158,7 @@
     });
   });
 
-  // Planning des disponibilités en lecture seule (synchronisé avec l'API Agenda si clé disponible)
+  // Planning des disponibilités : lu en direct dans l'agenda (lecture seule, aucune donnée privée)
   var calGrille = document.getElementById('cal-grille');
   var calPeriode = document.getElementById('cal-periode');
   var btnPrec = document.getElementById('cal-prec');
@@ -109,59 +166,40 @@
   var champPeriode = document.getElementById('f-periode');
   if (calGrille && calPeriode) {
     var MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
     var JOURS_SEM = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     var API_AGENDA = 'https://script.google.com/macros/s/AKfycbxMqAMr1-0ztIOjkgFMmLn5_-50ygoX4gZ9SWYYdSjsZICm-C4BxtEU21nAjXQQ270K/exec';
-    var CLE_PUBLIC = window.TF_PUBLIC_KEY || '';
-    try {
-      var mem = JSON.parse(localStorage.getItem('tf:last') || 'null');
-      if (!CLE_PUBLIC && mem && mem.k) CLE_PUBLIC = mem.k;
-    } catch (e) { /* rien */ }
+    var CACHE = 'tf:dispo', FRAIS = 5 * 60 * 1000, PERIME = 36 * 3600 * 1000;
+    var calEtat = document.getElementById('cal-etat');
+    var calEtatTexte = document.getElementById('cal-etat-texte');
+    var prochaine = document.getElementById('prochaine');
+    var prochaineDate = document.getElementById('prochaine-date');
 
     var auj = new Date();
     var anneeBase = auj.getFullYear();
     var moisBase = auj.getMonth();
     var decalage = 0;
-    var etatsJours = {};
-    var feries = {};
+    var donnees = null;        // { t: instant du relevé, days: {...}, feries: {...}, maxDay }
+    var neuf = true;           // joue l'animation de pose des jours une seule fois par chargement de données
     var jourChoisi = '';
 
     function pad2(n) { return (n < 10 ? '0' : '') + n; }
     function cleDate(a, m, j) { return a + '-' + pad2(m + 1) + '-' + pad2(j); }
+    function dateDe(iso) { var p = iso.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
     function formatDateFr(iso) {
-      var p = iso.split('-');
-      return parseInt(p[2], 10) + ' ' + MOIS[parseInt(p[1], 10) - 1].toLowerCase() + ' ' + p[0];
+      var d = dateDe(iso);
+      return JOURS[d.getDay()] + ' ' + d.getDate() + (d.getDate() === 1 ? 'er' : '') + ' ' + MOIS[d.getMonth()].toLowerCase()
+        + (d.getFullYear() !== anneeBase ? ' ' + d.getFullYear() : '');
     }
-
-    function feriesAnnee(an) {
-      var f = {};
-      f[an + '-01-01'] = 1; f[an + '-05-01'] = 1; f[an + '-05-08'] = 1;
-      f[an + '-07-14'] = 1; f[an + '-08-15'] = 1; f[an + '-11-01'] = 1;
-      f[an + '-11-11'] = 1; f[an + '-12-25'] = 1;
-      // Pâques (algorithme de Butcher)
-      var a = an % 19, b = Math.floor(an / 100), c = an % 100;
-      var d = Math.floor(b / 4), e = b % 4, g = Math.floor((b + 8) / 25);
-      var i = Math.floor((b - g + 1) / 3), h = (19 * a + b - d - i + 15) % 30;
-      var k = Math.floor(c / 4), l = c % 4, m = (32 + 2 * e + 2 * k - h - l) % 7;
-      var n = Math.floor((a + 11 * h + 22 * m) / 451);
-      var moisP = Math.floor((h + m - 7 * n + 114) / 31);
-      var jourP = ((h + m - 7 * n + 114) % 31) + 1;
-      function ajoutJours(jDelta) {
-        var dt = new Date(Date.UTC(an, moisP - 1, jourP + jDelta));
-        return dt.toISOString().slice(0, 10);
-      }
-      f[ajoutJours(1)] = 1;   // Lundi de Pâques
-      f[ajoutJours(39)] = 1;  // Ascension
-      f[ajoutJours(50)] = 1;  // Lundi de Pentecôte
-      return f;
-    }
-    Object.assign(feries, feriesAnnee(anneeBase), feriesAnnee(anneeBase + 1));
-
     var isoAuj = cleDate(auj.getFullYear(), auj.getMonth(), auj.getDate());
 
     function dessinerCalendrier() {
       var nbMois = window.innerWidth <= 860 ? 1 : 3;
       var html = '';
       var premierTitre = '', dernierTitre = '';
+      var jours = donnees ? donnees.days || {} : null;
+      var feries = donnees ? donnees.feries || {} : {};
+      var fin = donnees && donnees.maxDay ? donnees.maxDay : '9999';
 
       for (var k = 0; k < nbMois; k++) {
         var dtMois = new Date(anneeBase, moisBase + decalage + k, 1);
@@ -175,54 +213,105 @@
         var libresMois = 0;
         var cellules = '';
 
-        for (var v = 0; v < premierJour; v++) {
-          cellules += '<span class="cal-j cal-j--vide"></span>';
-        }
+        for (var v = 0; v < premierJour; v++) cellules += '<span class="cal-j cal-j--vide"></span>';
         for (var j = 1; j <= nbJours; j++) {
           var iso = cleDate(an, mo, j);
-          var jourSem = (premierJour + j - 1) % 7;
-          var estWe = jourSem >= 5;
-          var estPasse = iso <= isoAuj;
-          var etat = etatsJours[iso];
-          var cls = 'cal-j ';
-          var titre = '';
-          var cliquable = false;
+          var estWe = (premierJour + j - 1) % 7 >= 5;
+          var etat = jours ? jours[iso] : null;
+          var cls = 'cal-j ', titre = '', cliquable = false;
 
-          if (estPasse || estWe || feries[iso]) {
-            cls += 'cal-j--off';
-            titre = feries[iso] ? 'Jour férié' : (estWe ? 'Week-end' : 'Passé');
+          if (iso <= isoAuj || iso > fin) {
+            cls += 'cal-j--off'; titre = iso === isoAuj ? 'Aujourd\'hui' : (iso > fin ? 'Pas encore ouvert' : 'Passé');
+            if (iso === isoAuj) cls += ' cal-j--auj';
+          } else if (!jours) {
+            cls += 'cal-j--attente'; titre = 'Lecture de l\'agenda…';
           } else if (etat && etat.s === 'x') {
-            cls += 'cal-j--pris';
-            titre = 'Déjà réservé';
+            cls += 'cal-j--pris'; titre = 'Indisponible';
           } else if (etat && etat.s === 'o') {
-            cls += 'cal-j--option';
-            titre = 'Option en cours — cliquez pour demander cette date';
-            cliquable = true;
-            libresMois++;
+            cls += 'cal-j--option'; titre = 'Option en cours : demande possible'; cliquable = true;
           } else {
-            cls += 'cal-j--libre';
-            titre = 'Disponible — cliquez pour demander cette date';
-            cliquable = true;
-            libresMois++;
+            cls += 'cal-j--libre'; cliquable = true;
+            if (estWe || feries[iso]) { cls += ' cal-j--we'; titre = (feries[iso] ? 'Jour férié' : 'Week-end') + ' : libre, sur demande'; }
+            else { titre = 'Libre : touchez pour demander cette date'; libresMois++; }
           }
           if (jourChoisi === iso) cls += ' cal-j--choisi';
 
-          cellules += '<span class="' + cls + '"'
+          cellules += '<span class="' + cls + '" style="--n:' + (k * 31 + j) + '"'
             + (cliquable ? ' data-date="' + iso + '" role="button" tabindex="0"' : '')
             + ' title="' + titre + '" aria-label="' + j + ' ' + MOIS[mo] + ' : ' + titre + '">' + j + '</span>';
         }
 
         html += '<div class="cal-mois">'
-          + '<div class="cal-mois__titre"><span>' + MOIS[mo] + ' ' + an + '</span><small>' + libresMois + ' j. ouvrés dispo</small></div>'
+          + '<div class="cal-mois__titre"><span>' + nomMois + '</span><small>' + (jours ? libresMois + ' j. ouvrés libres' : '') + '</small></div>'
           + '<div class="cal-semaine">' + JOURS_SEM.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>'
-          + '<div class="cal-jours">' + cellules + '</div>'
+          + '<div class="cal-jours' + (jours && neuf ? ' est-neuf' : '') + '">' + cellules + '</div>'
           + '</div>';
       }
+      if (jours) neuf = false;
 
       calGrille.innerHTML = html;
-      calPeriode.textContent = premierTitre === dernierTitre ? premierTitre : premierTitre + ' — ' + dernierTitre;
+      calPeriode.textContent = premierTitre === dernierTitre ? premierTitre : premierTitre + ' à ' + dernierTitre;
       if (btnPrec) btnPrec.disabled = decalage <= 0;
       if (btnSuiv) btnSuiv.disabled = decalage >= 9;
+    }
+
+    // Prochain jour ouvré entièrement libre, affiché en haut de page
+    function majProchaine() {
+      if (!prochaine || !prochaineDate) return;
+      if (!donnees) { prochaine.hidden = true; return; }
+      var d = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate());
+      for (var n = 0; n < 200; n++) {
+        d.setDate(d.getDate() + 1);
+        var iso = cleDate(d.getFullYear(), d.getMonth(), d.getDate());
+        var js = d.getDay();
+        if (js === 0 || js === 6 || (donnees.feries || {})[iso] || (donnees.days || {})[iso]) continue;
+        prochaineDate.textContent = formatDateFr(iso);
+        prochaine.hidden = false;
+        return;
+      }
+      prochaine.hidden = true;
+    }
+
+    function majEtat(erreur) {
+      if (!calEtat || !calEtatTexte) return;
+      var hors = !donnees || erreur;
+      calEtat.classList.toggle('est-hors-ligne', !!hors);
+      if (prochaine) prochaine.classList.toggle('est-hors-ligne', !!hors);
+      if (!donnees) {
+        calEtatTexte.textContent = erreur ? 'Agenda injoignable pour le moment' : 'Connexion à l\'agenda…';
+        return;
+      }
+      var h = new Date(donnees.t);
+      var quand = h.toDateString() === new Date().toDateString()
+        ? 'à ' + pad2(h.getHours()) + ' h ' + pad2(h.getMinutes())
+        : 'le ' + h.getDate() + ' ' + MOIS[h.getMonth()].toLowerCase();
+      calEtatTexte.textContent = (erreur ? 'Dernier relevé de l\'agenda ' : 'En direct de l\'agenda, relevé ') + quand;
+    }
+
+    function recevoir(d, erreur) {
+      donnees = d; neuf = neuf && !!d;
+      dessinerCalendrier(); majProchaine(); majEtat(erreur);
+    }
+
+    var enCours = false;
+    function lireAgenda() {
+      if (enCours || document.hidden) return;
+      enCours = true;
+      var controle = ('AbortController' in window) ? new AbortController() : null;
+      var delai = setTimeout(function () { if (controle) controle.abort(); }, 20000);
+      fetch(API_AGENDA, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        signal: controle ? controle.signal : undefined,
+        body: JSON.stringify({ a: 'dispo', k: '', p: {} })
+      }).then(function (r) { return r.json(); }).then(function (res) {
+        if (!res || !res.ok || !res.data || !res.data.days) throw new Error('reponse');
+        var d = { t: Date.now(), days: res.data.days, feries: res.data.feries || {}, maxDay: res.data.maxDay || '' };
+        try { localStorage.setItem(CACHE, JSON.stringify(d)); } catch (e) { /* stockage indisponible */ }
+        recevoir(d, false);
+      }).catch(function () {
+        recevoir(donnees, true);
+      }).then(function () { clearTimeout(delai); enCours = false; });
     }
 
     calGrille.addEventListener('click', function (e) {
@@ -231,39 +320,37 @@
       jourChoisi = cel.getAttribute('data-date');
       dessinerCalendrier();
       if (champPeriode) {
-        var actuel = champPeriode.value.trim();
+        var actuel = champPeriode.value.replace(/\s*\(?À partir du [^)]*\)?$/, '').trim();
         var libelle = 'À partir du ' + formatDateFr(jourChoisi);
-        champPeriode.value = actuel && actuel.indexOf('À partir du') === -1 ? actuel + ' (' + libelle + ')' : libelle;
+        champPeriode.value = actuel ? actuel + ' (' + libelle + ')' : libelle;
       }
       if (sectionReserver) sectionReserver.scrollIntoView({ behavior: 'smooth' });
     });
-
     calGrille.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
         var cel = e.target.closest('[data-date]');
         if (cel) { e.preventDefault(); cel.click(); }
       }
     });
-
     if (btnPrec) btnPrec.addEventListener('click', function () { if (decalage > 0) { decalage--; dessinerCalendrier(); } });
     if (btnSuiv) btnSuiv.addEventListener('click', function () { if (decalage < 9) { decalage++; dessinerCalendrier(); } });
-    window.addEventListener('resize', dessinerCalendrier);
-    dessinerCalendrier();
+    var largeurVue = window.innerWidth;
+    window.addEventListener('resize', function () {
+      if ((largeurVue <= 860) !== (window.innerWidth <= 860)) dessinerCalendrier();
+      largeurVue = window.innerWidth;
+    });
 
-    // Si une clé de lecture est configurée ou présente, on synchronise les jours réservés
-    if (CLE_PUBLIC) {
-      fetch(API_AGENDA, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ a: 'init', k: CLE_PUBLIC, p: {} })
-      }).then(function (r) { return r.json(); }).then(function (res) {
-        if (res && res.ok && res.data && res.data.days) {
-          etatsJours = res.data.days;
-          if (res.data.feries) Object.assign(feries, res.data.feries);
-          dessinerCalendrier();
-        }
-      }).catch(function () { /* garde l'affichage des jours ouvrés */ });
-    }
+    // Dernier relevé connu : affiché tout de suite, puis remplacé par la lecture en direct.
+    try {
+      var mem = JSON.parse(localStorage.getItem(CACHE) || 'null');
+      if (mem && mem.t && mem.days && Date.now() - mem.t < PERIME) donnees = mem;
+    } catch (e) { /* rien */ }
+    recevoir(donnees, false);
+    lireAgenda();
+    setInterval(function () { if (!donnees || Date.now() - donnees.t > FRAIS) lireAgenda(); }, 60000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && (!donnees || Date.now() - donnees.t > FRAIS)) lireAgenda();
+    });
   }
 
   // Formulaire de demande

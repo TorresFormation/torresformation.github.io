@@ -1,7 +1,7 @@
-/* Torres Formation — le bouclier est forgé à l'ouverture :
-   trois pièces au rouge incandescent convergent, l'épée (le T) se plante, un cordon de soudure
-   rouge scelle l'ensemble, puis tout refroidit jusqu'aux teintes exactes du logo de la charte
-   (os, acier, pierre, rouge). Au doigt ou à la souris, on peut le faire pivoter.
+/* Torres Formation — le bouclier s'assemble à l'ouverture :
+   les trois pièces arrivent dans leurs teintes de la charte (aucune incandescence), l'épée (le T)
+   se plante, puis le fil rouge se grave en soudant brièvement le métal.
+   Au doigt ou à la souris, on peut le faire pivoter. Le logo suit le thème clair / sombre du site.
    three.js est fourni localement. Si WebGL manque, le logo statique s'affiche. */
 import * as THREE from '../vendor/three.module.min.js';
 
@@ -50,9 +50,9 @@ function demarrer() {
   const contre = new THREE.DirectionalLight(0xa9b0bc, 1.3);
   contre.position.set(5, -1, -3);
   scene.add(contre);
-  const eclair = new THREE.PointLight(0xfff1dc, 0, 14, 1.4);   // flash de l'impact
+  const eclair = new THREE.PointLight(0xffffff, 0, 14, 1.4);   // flash de l'impact
   scene.add(eclair);
-  const braise = new THREE.PointLight(0xff5a1a, 0, 6, 1.6);    // lueur de la soudure
+  const braise = new THREE.PointLight(0xff6a2a, 0, 1.1, 2);    // lueur de la soudure
   scene.add(braise);
 
   // Studio de reflets fabriqué sur place (aucune image à charger) : le métal y accroche des panneaux lumineux.
@@ -146,10 +146,16 @@ function demarrer() {
   const arete = (x) => (Math.abs(x - 100) < 0.01 ? 15 : 0); // l'arête centrale de la lame est en relief
   const plat = (z) => () => z;
 
-  const mLG = matiere(0xedeae4, { roughness: 0.55 });              // lame gauche : os
-  const mLD = matiere(0xa9a59e, { roughness: 0.45 });              // lame droite : acier
-  const mAile = matiere(0x6e6b66, { roughness: 0.6 });             // ailes : pierre
-  const metaux = [mLG, mLD, mAile];
+  const mLG = matiere(0xedeae4, { roughness: 0.55 });              // lame gauche
+  const mLD = matiere(0xa9a59e, { roughness: 0.45 });              // lame droite
+  const mAile = matiere(0x6e6b66, { roughness: 0.6 });             // ailes
+  // Thème : sur fond sombre, les teintes du logo officiel ; sur fond clair, leur version foncée.
+  const TEINTES = { sombre: [0xedeae4, 0xa9a59e, 0x6e6b66], clair: [0x1b1b1e, 0x6e6b66, 0xa9a59e] };
+  function teinter() {
+    const t = TEINTES[document.documentElement.dataset.theme === 'clair' ? 'clair' : 'sombre'];
+    mLG.color.setHex(t[0]); mLD.color.setHex(t[1]); mAile.color.setHex(t[2]);
+  }
+  teinter();
 
   // Le bouclier (deux ailes) et l'épée (le T), montés séparément : tout converge vers le centre.
   const ensemble = new THREE.Group();
@@ -185,12 +191,12 @@ function demarrer() {
 
   // Onde de choc : un anneau lumineux qui s'élargit.
   const onde = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 64),
-    new THREE.MeshBasicMaterial({ color: 0xffe2b8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    new THREE.MeshBasicMaterial({ color: 0xa9a59e, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
   onde.visible = false;
   ensemble.add(onde);
 
   // Étincelles : une volée à l'impact.
-  const NB = lent ? 40 : 110;
+  const NB = lent ? 24 : 60;
   const etPos = new Float32Array(NB * 3), etVit = new Float32Array(NB * 3), etVie = new Float32Array(NB), etDepart = new Float32Array(NB * 3);
   const foyers = [P(50, 66), P(150, 66), P(100, 70), P(76, 60), P(124, 60), P(100, 120)];
   let graine = 11;
@@ -204,27 +210,36 @@ function demarrer() {
   etPos.set(etDepart);
   const gEt = new THREE.BufferGeometry();
   gEt.setAttribute('position', new THREE.BufferAttribute(etPos, 3));
-  const mEt = new THREE.PointsMaterial({ color: 0xffb060, size: 0.045, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const mEt = new THREE.PointsMaterial({ color: 0xa9a59e, size: 0.035, transparent: true, opacity: 0, depthWrite: false });
   const etincelles = new THREE.Points(gEt, mEt);
   etincelles.visible = false; etincelles.frustumCulled = false;
   ensemble.add(etincelles);
 
+  // Gerbe de soudure : quelques étincelles chaudes qui partent de la tête du trait, brièvement.
+  const NS = lent ? 14 : 36;
+  const soPos = new Float32Array(NS * 3), soVit = new Float32Array(NS * 3), soNe = new Float32Array(NS);
+  for (let i = 0; i < NS; i++) {
+    const ang = alea() * Math.PI * 2, v = 0.35 + alea() * 1.1;
+    soVit[i * 3] = Math.cos(ang) * v; soVit[i * 3 + 1] = Math.sin(ang) * v * 0.7 + 0.25; soVit[i * 3 + 2] = 0.5 + alea() * 1.2;
+    soNe[i] = i / NS;                                  // moment de naissance le long du tracé (0 à 1)
+  }
+  const gSo = new THREE.BufferGeometry();
+  gSo.setAttribute('position', new THREE.BufferAttribute(soPos, 3));
+  const mSo = new THREE.PointsMaterial({ color: 0xffc27a, size: 0.03, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const soudure = new THREE.Points(gSo, mSo);
+  soudure.visible = false; soudure.frustumCulled = false;
+  epee.add(soudure);
+
   // Chronologie (secondes)
   const T_AILES = 0.15, T_AILES_FIN = 1.55, T_CHUTE = 0.8, T_IMPACT = 1.95;
-  const T_SOUDE = 2.2, T_SOUDE_FIN = 3.4, REFROIDI = 2.6;
+  const T_SOUDE = 2.2, T_SOUDE_FIN = 3.0, REFROIDI = 0.7;
   const FIN = T_SOUDE_FIN + REFROIDI + 0.2;
   const sortie = (x) => 1 - Math.pow(1 - x, 3);
   const borne = THREE.MathUtils.clamp;
   const lisser = (x) => x * x * (3 - 2 * x);
 
-  const chaud = new THREE.Color(1, 0.6, 0.22), orange = new THREE.Color(1, 0.25, 0.04), rouge = new THREE.Color(0xc22a22);
-  const braiseC = new THREE.Color(0.6, 0.07, 0.02), teinte = new THREE.Color();
-
-  function chaleur(h) {                     // h : 1 = incandescent, 0 = froid
-    if (h > 0.7) teinte.copy(orange).lerp(chaud, (h - 0.7) / 0.3);
-    else teinte.copy(braiseC).lerp(orange, h / 0.7);
-    for (const m of metaux) { m.emissive.copy(teinte); m.emissiveIntensity = h * 0.95; }
-  }
+  const chaud = new THREE.Color(1, 0.78, 0.45), orange = new THREE.Color(1, 0.3, 0.06), rouge = new THREE.Color(0xc22a22);
+  const teinte = new THREE.Color();
 
   function poser(t) {
     const s = t - T_IMPACT;                           // temps depuis l'impact
@@ -250,13 +265,13 @@ function demarrer() {
 
     // --- 3. Flash, onde de choc, étincelles ---
     const clac = t > T_AILES_FIN ? 7 * Math.exp(-(t - T_AILES_FIN) * 16) : 0;       // petit « clac » des ailes
-    eclair.intensity = (s > 0 ? 26 * Math.exp(-s * 7) : 0) + clac;
+    eclair.intensity = (s > 0 ? 14 * Math.exp(-s * 8) : 0) + clac * 0.6;
     eclair.position.set(0, 0.7, 1.6);
     onde.visible = s > 0 && s < 0.75;
     if (onde.visible) {
       onde.position.set(0, 0.5, 0.3);
       onde.scale.setScalar(0.25 + s * 3.4);
-      onde.material.opacity = 0.4 * Math.pow(1 - s / 0.75, 2);
+      onde.material.opacity = 0.5 * Math.pow(1 - s / 0.75, 2);
     }
     if (s > 0 && s < 1.05) {
       etincelles.visible = true;
@@ -270,11 +285,7 @@ function demarrer() {
       mEt.opacity = Math.max(0, 1 - s / 0.95);
     } else etincelles.visible = false;
 
-    // --- 4. Le métal est incandescent, puis refroidit après l'impact ---
-    const h = Math.min(1, t / 0.35) * (s > 0 ? Math.exp(-s / 1.2) * (1 - lisser(borne((s - 2.2) / 2, 0, 1))) : 1);
-    chaleur(h);
-
-    // --- 5. Le fil rouge scelle l'ensemble : en fusion, puis il refroidit jusqu'au rouge de la charte ---
+    // --- 4. Le fil rouge se grave : la tête soude le métal un court instant, le trait prend aussitôt le rouge de la charte ---
     const p = borne((t - T_SOUDE) / (T_SOUDE_FIN - T_SOUDE), 0, 1);
     const trace = lisser(p);
     fil.visible = trace > 0;
@@ -284,13 +295,26 @@ function demarrer() {
     else teinte.copy(orange).lerp(rouge, (froid - 0.35) / 0.65);
     mFil.emissive.copy(teinte);
     mFil.color.copy(teinte);
-    mFil.emissiveIntensity = 2.4 - 2.1 * froid;
+    mFil.emissiveIntensity = 2.2 - 1.9 * froid;
     const yTete = yHaut + (yBas - yHaut) * trace;
     halo.visible = trace > 0 && trace < 1;
     halo.position.set(0, yTete, 0.26);
-    halo.scale.setScalar(0.5);
-    braise.intensity = trace > 0 ? 7 * (1 - froid) : 0;
-    braise.position.set(0, trace < 1 ? yTete : 0, 0.7);
+    halo.scale.setScalar(0.42);
+    braise.intensity = trace > 0 && trace < 1 ? 1.6 : 0;      // lueur locale, uniquement autour de la tête de soudure
+    braise.position.set(0, yTete, 0.42);
+    // Gerbe de soudure : chaque étincelle naît au passage de la tête et vit 0,35 s.
+    const ts = t - T_SOUDE, duree = T_SOUDE_FIN - T_SOUDE;
+    soudure.visible = ts > 0 && ts < duree + 0.4;
+    if (soudure.visible) {
+      for (let i = 0; i < NS; i++) {
+        const age = ts - soNe[i] * duree, j = i * 3;
+        if (age < 0 || age > 0.35) { soPos[j] = 0; soPos[j + 1] = -99; soPos[j + 2] = 0; continue; }
+        const y0 = yHaut + (yBas - yHaut) * lisser(soNe[i]);
+        soPos[j] = soVit[j] * age; soPos[j + 1] = y0 + soVit[j + 1] * age - 2.6 * age * age; soPos[j + 2] = 0.24 + soVit[j + 2] * age;
+      }
+      gSo.attributes.position.needsUpdate = true;
+      mSo.opacity = 1;
+    }
     return t < FIN;                                   // encore en cours ?
   }
 
@@ -431,11 +455,14 @@ function demarrer() {
   });
   toile.addEventListener('webglcontextrestored', () => { visible = true; boite.classList.remove('sans-3d'); boite.classList.add('est-3d'); reveiller(); });
 
+  // Changement de thème (clair / sombre) : on reteinte les pièces et on redessine.
+  document.addEventListener('tf:theme', () => { teinter(); if (pret) { if (fige !== undefined || !actif) dessiner(); reveiller(); } });
+
   taille();
   defilement();
 
   // Compile tous les matériaux avant la première image : pas d'à-coup au démarrage.
-  for (const o of [aileG, aileD, epee, fil, halo, onde, etincelles]) o.visible = true;
+  for (const o of [aileG, aileD, epee, fil, halo, onde, etincelles, soudure]) o.visible = true;
   rendu.compile(scene, camera);
   pret = true;
   if (fige !== undefined) {

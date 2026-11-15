@@ -73,10 +73,14 @@ sup{font-size:.55em;line-height:0}
 @keyframes parait{to{opacity:1}}
 .accueil__visuel{position:relative;height:min(78svh,46rem);min-height:22rem}
 .accueil__affiche,.accueil__scene{position:absolute;inset:0;width:100%;height:100%}
-.accueil__affiche{object-fit:contain;padding:8%;transition:opacity .6s}
-.accueil__scene{opacity:0;transition:opacity .8s;touch-action:pan-y}
+.accueil__affiche{object-fit:contain;padding:8%}
+/* Avec JavaScript, le logo statique reste caché : il ne sert que si la 3D est impossible (pas de logo fini avant l'animation). */
+.js .accueil__affiche{visibility:hidden}
+.js .accueil__visuel.sans-3d .accueil__affiche{visibility:visible;animation:parait .6s ease both}
+.accueil__scene{opacity:0;touch-action:pan-y;cursor:grab;-webkit-tap-highlight-color:transparent;user-select:none}
+.accueil__scene:active{cursor:grabbing}
 .accueil__visuel.est-3d .accueil__scene{opacity:1}
-.accueil__visuel.est-3d .accueil__affiche{opacity:0}
+.js .accueil__visuel.est-3d .accueil__affiche{visibility:hidden}
 
 /* Blocs */
 .bloc{padding:clamp(4.5rem,9vw,8.5rem) var(--marge);border-top:1px solid var(--filet)}
@@ -91,22 +95,17 @@ sup{font-size:.55em;line-height:0}
 .engin:hover{background:var(--anthracite)}
 .engin::before{content:"";position:absolute;left:0;top:-1px;width:100%;height:1px;background:var(--rouge);transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
 .engin:hover::before{transform:scaleX(1)}
-.engin svg{display:block;width:7.6rem;height:5.7rem;margin-bottom:1.4rem;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
+.engin svg{display:block;width:8.25rem;height:5.5rem;margin-bottom:1.4rem;transition:transform .45s cubic-bezier(.2,.75,.2,1)}
 .engin:hover svg{transform:translateX(.4rem)}
 .engin h3{font:600 1.5rem/1.15 var(--titres);letter-spacing:.02em}
 .engin p{color:var(--acier);margin-top:.45rem;font-size:1rem;line-height:1.45}
 .engins__note{margin-top:2rem;max-width:44rem;color:var(--acier)}
 .engins__note strong{color:var(--os);font-weight:500}
 
-/* Parcours */
-.frise{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--pierre)}
-.frise li{position:relative;padding:1.75rem 1.5rem 0 0}
-.frise li::before{content:"";position:absolute;top:-5px;left:0;width:9px;height:9px;background:var(--os);transform:rotate(45deg)}
-.frise li:last-child::before{background:var(--rouge)}
-.frise__date{display:block;font:500 1rem/1 var(--titres);letter-spacing:.12em;text-transform:uppercase;color:var(--acier);margin-bottom:.75rem}
-.frise p{color:var(--acier);margin-top:.5rem;font-size:1rem}
-.atouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--filet);margin-top:clamp(3rem,6vw,5rem);border:1px solid var(--filet)}
-.atouts li{background:var(--anthracite);padding:2rem}
+/* Atouts */
+.atouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--filet);border:1px solid var(--filet)}
+.atouts li{position:relative;background:var(--anthracite);padding:2rem}
+.atouts li::before{content:"";display:block;width:2.25rem;height:2px;background:var(--rouge);margin-bottom:1.25rem}
 .atouts p{color:var(--acier);margin-top:.6rem}
 
 /* Étapes */
@@ -197,11 +196,8 @@ sup{font-size:.55em;line-height:0}
   .bloc__tete{grid-template-columns:1fr}
   .engins{grid-template-columns:repeat(2,minmax(0,1fr))}
   .engin{padding:1.4rem 1rem 1.3rem}
-  .engin svg{width:4.6rem;height:3.45rem;margin-bottom:1rem}
+  .engin svg{width:5.1rem;height:3.4rem;margin-bottom:1rem}
   .engin h3{font-size:1.25rem}
-  .frise{grid-template-columns:1fr;border-top:0;border-left:1px solid var(--pierre)}
-  .frise li{padding:0 0 2rem 1.5rem}
-  .frise li::before{top:.3rem;left:-5px}
   .atouts,.regions{grid-template-columns:1fr}
   .etapes{grid-template-columns:1fr 1fr}
   .reserver{grid-template-columns:1fr}

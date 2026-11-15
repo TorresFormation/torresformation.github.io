@@ -270,8 +270,8 @@ function demarrer() {
     onde.visible = s > 0 && s < 0.75;
     if (onde.visible) {
       onde.position.set(0, 0.5, 0.3);
-      onde.scale.setScalar(0.25 + s * 3.4);
-      onde.material.opacity = 0.5 * Math.pow(1 - s / 0.75, 2);
+      onde.scale.setScalar(0.25 + Math.sin(Math.min(1, s / 0.75) * 1.5708) * 0.85);   // reste dans le cadre : aucun bord de toile visible
+      onde.material.opacity = 0.45 * Math.pow(1 - s / 0.75, 2.4);
     }
     if (s > 0 && s < 1.05) {
       etincelles.visible = true;
@@ -339,7 +339,7 @@ function demarrer() {
     rendu.setPixelRatio(definition());
     rendu.setSize(l, h, false);
     camera.aspect = l / h;
-    camera.position.z = 5.9 / Math.min(1, camera.aspect * 1.2);   // recule en format étroit
+    camera.position.z = 5.2 / Math.min(1, camera.aspect * 1.2);   // recule en format étroit
     camera.updateProjectionMatrix();
     if (pret) dessiner();      // jamais d'image avant que la scène soit posée au début de l'animation
   }

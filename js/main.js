@@ -7,6 +7,14 @@
   var EMAIL = 't.maicol.formation@gmail.com';
   var ENVOI = 'https://formsubmit.co/ajax/' + EMAIL;
 
+  // Ouverture à froid : le navigateur (surtout mobile) ne doit pas sauter à l'ancre #questions
+  // gardée d'une visite précédente, sinon on rate l'entrée animée du haut de page.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (location.hash) {
+    history.replaceState(null, '', location.pathname + location.search);
+    window.scrollTo(0, 0);
+  }
+
   var doc = document.documentElement;
   doc.classList.add('js');
 
